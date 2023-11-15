@@ -15,6 +15,9 @@ On PYPI: `<https://pypi.python.org/pypi/py-openshowvar>`_
 
 ``pip install py_openshowvar``
 
+On Terminal:
+``pip install git+https://github.com/AndreTorneiro6/py_openshowvar.git``
+
 Usage
 ======
 
