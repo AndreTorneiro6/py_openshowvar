@@ -20,11 +20,12 @@ class openshowvar(object):
         self.ip = ip
         self.port = port
         self.msg_id = random.randint(1, 100)
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.sock.connect((self.ip, self.port))
-        except socket.error:
-            pass
+        self.sock = ''
+
+        # try:
+        #     self.sock.connect((self.ip, self.port))
+        # except socket.error:
+        #     pass
 
     def test_connection(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,7 +38,15 @@ class openshowvar(object):
 
     can_connect = property(test_connection)
 
+    def connect(self):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.sock.connect((self.ip, self.port))
+        except socket.error:
+            pass
+
     def read(self, var, debug=True):
+        self.connect()
         if not isinstance(var, str):
             raise Exception('Var name is a string')
         else:
@@ -45,6 +54,7 @@ class openshowvar(object):
         return self._read_var(debug)
 
     def write(self, var, value, debug=True):
+        self.connect()
         if not (isinstance(var, str) and isinstance(value, str)):
             raise Exception('Var name and its value should be string')
         self.varname = var if PY2 else var.encode(ENCODING)
@@ -65,12 +75,13 @@ class openshowvar(object):
         _value = self._read_rsp(debug)
         if debug:
             print(_value)
+
         return _value
 
     def _send_req(self, req):
         self.rsp = None
         self.sock.sendall(req)
-        self.rsp = self.sock.recv(256)
+        self.rsp = self.sock.recv(1024)
 
     def _pack_read_req(self):
         var_name_len = len(self.varname)
@@ -104,8 +115,10 @@ class openshowvar(object):
             )
 
     def _read_rsp(self, debug=False):
+        self.close()
         if self.rsp is None: return None
         var_value_len = len(self.rsp) - struct.calcsize('!HHBH') - 3
+        print(self.rsp, var_value_len)
         result = struct.unpack('!HHBH'+str(var_value_len)+'s'+'3s', self.rsp)
         _msg_id, body_len, flag, var_value_len, var_value, isok = result
         if debug:
@@ -147,4 +160,5 @@ if __name__ == '__main__':
     ip = input('IP Address: ')
     port = input('Port: ')
     run_shell(ip, int(port))
+
 
